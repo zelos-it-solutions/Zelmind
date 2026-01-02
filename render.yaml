@@ -1,0 +1,26 @@
+services:
+  # Web Service: Handles HTTP requests
+  - type: web
+    name: reminder-agent-web
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn project.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.18
+      - key: ENABLE_REMINDER_THREAD
+        value: false  # Explicitly disable in-process thread
+
+  # Worker Service: Handles Background Reminders
+  - type: worker
+    name: reminder-agent-worker
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python manage.py run_reminders
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.18
