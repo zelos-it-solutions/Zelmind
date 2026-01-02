@@ -1,0 +1,33 @@
+# Local environment & DB
+.env
+db.sqlite3
+virtual
+virtual_old
+__pycache__/
+*.pyc
+
+# OS generated
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+!.vscode/settings.json
+
+# Local Debug & Temporary Files
+debug.txt
+debug_enhanced.txt
+debug_failure.txt
+debug_reminders.py
+doc.txt
+reproduce_issue.py
+reproduce_issue_v2.py
+reproduce_issue_v3.py
+reproduce_recurring_update.py
+test_notification_flow.py
+test_output.txt
+test_recurring_update.py
+verify_config.py
+verify_deletion_fix.py
+verify_output.txt
+verify_output.txt

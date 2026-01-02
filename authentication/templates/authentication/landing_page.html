@@ -1,0 +1,150 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Reminder Agent - Smart Scheduling & Reminders</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'authentication/css/landing.css' %}">
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <div class="logo">
+                <img src="{% static 'authentication/images/calendar.png' %}" alt="Logo" class="nav-logo-img">
+                <span>Zelmind</span>
+            </div>
+            <div class="nav-links">
+                <!-- <a href="#features">Features</a> -->
+                <a href="#how-it-works">How it Works</a>
+                <a href="{% url 'login' %}" class="btn-nav">Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="container hero-container">
+            <div class="hero-content">
+                <h1 class="hero-title">Your Personal AI<br>Calendar Assistant</h1>
+                <p class="hero-subtitle">
+                    Experience the future of productivity. Connect your calendar, simply "talk" to your assistant, and
+                    let AI organize your schedule, find meeting times, and send you timely reminders via WhatsApp and
+                    Email.
+                </p>
+                <div class="hero-cta-group">
+                    <a href="{% url 'login' %}" class="cta-button primary">Get Started for Free</a>
+                    <a href="#how-it-works" class="cta-button secondary">See how it works</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <!-- Abstract visual representation -->
+                <div class="calendar-card float-animation">
+                    <div class="cal-header">
+                        <div class="circles">
+                            <span class="red"></span><span class="yellow"></span><span class="green"></span>
+                        </div>
+                    </div>
+                    <div class="cal-body">
+                        <div class="event-item">
+                            <div class="event-time">10:00 AM</div>
+                            <div class="event-detail">Team Sync</div>
+                        </div>
+                        <div class="event-item active">
+                            <div class="event-time">02:00 PM</div>
+                            <div class="event-detail">Client Call (AI Reminded)</div>
+                        </div>
+                        <div class="event-item">
+                            <div class="event-time">04:30 PM</div>
+                            <div class="event-detail">Gym Session</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Detailed Info Section -->
+    <section id="about" class="section-light">
+        <div class="container">
+            <div class="section-header">
+                <h2>Why Use AI Reminder Agent?</h2>
+                <p>Scheduling shouldn't be a chore. We combine the power of Large Language Models with your existing
+                    Google Calendar to make management effortless.</p>
+            </div>
+            <div class="grid-3">
+                <div class="info-card">
+                    <div class="icon-box">🗣️</div>
+                    <h3>Natural Language Processing</h3>
+                    <p>Forget filling out complex forms. Just type "Schedule a meeting with John next Tuesday at 2pm"
+                        and our agent handles the rest, understanding context, dates, and times naturally.</p>
+                </div>
+                <div class="info-card">
+                    <div class="icon-box">🧠</div>
+                    <h3>Context Aware</h3>
+                    <p>The AI understands "tomorrow", "next week", or "after my last meeting". It reads your calendar to
+                        find conflicts proactively before you even book.</p>
+                </div>
+                <div class="info-card">
+                    <div class="icon-box">🔗</div>
+                    <h3>Seamless Integration</h3>
+                    <p>Deeply integrated with Google Calendar. Changes made here reflect instantly on your phone,
+                        laptop, and everywhere you use Google Calendar.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="section-white">
+        <div class="container">
+            <div class="section-header">
+                <h2>How It Works</h2>
+                <p>Three simple steps to automate your chaos.</p>
+            </div>
+            <div class="steps-grid">
+                <div class="step-item">
+                    <div class="step-number">01</div>
+                    <h3>Connect</h3>
+                    <p>Sign in with your Google account to give the AI secure access to your calendar events.</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">02</div>
+                    <h3>Chat</h3>
+                    <p>Use the chat interface to add, remove, or update events. "Move my 3pm to 4pm" is all it takes.
+                    </p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">03</div>
+                    <h3>Relax</h3>
+                    <p>Get notified via WhatsApp or Email before important events so you never miss a beat.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-content">
+            <div class="logo-footer">
+                <img src="{% static 'authentication/images/calendar.png' %}" alt="Logo"
+                    style="height: 30px; opacity: 0.8;">
+                <span>AI Reminder Agent</span>
+            </div>
+            <div class="copyright">
+                &copy; {% now "Y" %} All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+</body>
+
+</html>

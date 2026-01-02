@@ -1,0 +1,1146 @@
+/* == Global & Reset == */
+*{
+   box-sizing: border-box; margin: 0; padding: 0;
+}
+body, html {
+   height: 100%;
+   font-family: 'Segoe UI', 'Inter', 'Roboto', 'Arial', sans-serif;
+   margin: 0;
+   overflow: hidden;
+}
+
+.app-container {
+  display: flex;
+  margin-top: 50px;
+  height: calc(100vh - 50px);
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 240px;
+  background: #f7f7f8;
+  padding: 0;
+  border-right: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar .new-task-btn {
+  display: block;
+  margin: 15px auto 16px auto;   /* Top, auto (center), bottom, auto (center) */
+  text-align: center;
+  width: max-content;
+  color: #3b49df;
+  font-size: 16px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-decoration: none;
+}
+.no-convos-msg {
+  color: #888;
+  font-size: 15px;
+  text-align: left;
+  margin: 24px 0 0 0;
+  padding: 0 25px;
+  pointer-events: none;
+  background: none;
+}
+.sidebar .recents {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  max-height: calc(100vh - 180px); 
+  margin-bottom: 16px;
+}
+.sidebar h3 {
+  font-size: 14px;
+  color: #5f6368;
+  margin-bottom: 8px;
+  margin-left: 25px;
+}
+.sidebar ul {
+  list-style: none;
+}
+.sidebar li {
+  padding: 8px 0;
+  padding-left: 25px;
+  padding-right: 5px;
+  margin-top: 3px;
+  cursor: pointer;
+  color: #202124;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sidebar .recents ul li{
+  margin-top: 2px;
+}
+.sidebar .new-task-btn,
+.sidebar .recents ul li {
+  transition: 0.2s ease;
+}
+.sidebar .new-task-btn:hover {
+  color: rgb(25, 29, 82);  
+}
+.sidebar .recents ul li:hover {
+  background-color: #e1e5e7;
+  border-radius: 4px;
+}
+.sidebar .recents ul li.active {
+  background-color: #e1e5e7;
+  border-radius: 4px;
+}
+
+/* Remove underline from recents links */
+.sidebar .recents ul li a {
+  text-decoration: none;
+  color: #202124;
+  display: block;
+  flex-grow: 1;
+  padding: 8px 5px 8px 0;
+  transition: background 0.2s;
+  font-size: 15px;
+}
+
+/* Active state: stick background */
+.sidebar .recents ul li:hover > a,
+.sidebar .recents ul li.active > a {
+  background-color: #e1e5e7;
+  color: #202124;
+  border-radius: 4px;
+}
+
+/* Sidebar wrapper & toggle */
+.sidebar-wrapper {
+  display: flex;
+}
+.sidebar-toggle-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+}
+.sidebar-wrapper.collapsed .sidebar {
+  display: none;
+}
+.sidebar-toggle-btn.nav-btn {
+  position: absolute;
+  top: 0; left: 16px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+}
+
+/* CHAT PANEL */
+.chat-panel {
+  flex: 1;
+  border-left: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  position: relative;
+  height: 100%;
+  min-width: 0;
+}
+.chat-messages {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  padding: 16px;
+  overflow-y: auto;
+  padding-bottom: 100px;
+}
+.message {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+.avatar {
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 12px;
+  /* color: #fff; */
+  font-size: 18px;
+  line-height: 36px;
+  overflow: hidden;
+}
+.user-avatar {
+  background: #6e49ff;
+  color: #fff;
+}
+.agent-avatar {
+  background: #f7f7f8;
+  color: #5f6368;
+}
+.message-content {
+  flex-grow: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.bubble {
+  max-width: 80%;
+  border-radius: 12px;
+  line-height: 1.6;
+  font-size: 15px;
+}
+.user-message .bubble {
+  background: #eaeaff;
+  color: #202124;
+  padding: 8px 15px;
+}
+.agent-message .bubble {
+  background: #ffffff;
+  color: #202124;
+  padding: 8px 18px 0px 18px;
+}
+/* instead of .bubble, target .message-bubble too */
+.message-bubble,
+.bubble {
+  max-width: 80%;
+  border-radius: 12px;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.user-message .message-bubble {
+  background: #eaeaff;
+  color: #202124;
+  padding: 8px 15px;
+}
+
+.user-message .message-bubble a{
+  text-decoration: none;
+}
+
+.agent-message .message-bubble {
+  background: #fff;
+  color: #202124;
+  padding: 3px 15px;
+}
+
+/* Prevent link underlines specifically in assistant messages */
+.agent-message .message-bubble a {
+  text-decoration: none;
+}
+
+
+/* Chat-input */
+.chat-input {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  padding: 16px 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+}
+
+.chat-input-inner {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.chat-input .chat-textarea {
+  width: 100%;
+  min-height: 35px;
+  height: auto;
+  line-height: 1.2;
+  padding: 10px 48px 10px 16px; /* right padding for button */
+  font-size: 15px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  resize: none;
+  overflow-y: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+  background: #fff;
+  font-family: 'Segoe UI', 'Inter', 'Roboto', 'Arial', sans-serif;
+}
+
+.chat-input .chat-textarea:focus {
+  outline: none;
+  border-color: #4285F4;
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+}
+
+.chat-input .send-btn {
+  position: absolute;
+  right: 12px;
+  top: 45%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #3b49df;
+  padding: 0;
+  z-index: 2;
+  height: 32px;
+  width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* NAVBAR */
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 50px;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  z-index: 1000;
+}
+.navbar .nav-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.navbar .logout-btn {
+  position: absolute;
+  right: 16px;
+  background: none;
+  border: none;
+  color: #3b49df;
+  cursor: pointer;
+  font-size: 16px;
+}
+.navbar .logout-btn::after {
+  content: '';
+  position: absolute;
+  left: 0; bottom: -2px;
+  width: 0; height: 2px;
+  background-color: #3b49df;
+  transition: width 0.3s ease;
+}
+.navbar .logout-btn:hover::after {
+  width: 100%;
+}
+
+/* Nav-user & edit-btn */
+.nav-user {
+  position: absolute;
+  top: 0; left: 52px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  z-index: 1000;
+  color: #202124;
+  font-size: 16px;
+}
+.nav-user .username {
+  margin-left: 8px;
+  color: inherit;
+}
+.edit-btn {
+  display: none;
+  position: absolute;
+  top: 0; left: 52px;
+  height: 50px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+}
+body.sidebar-collapsed .nav-user {
+  display: none;
+}
+body:not(.sidebar-collapsed) .edit-btn {
+  display: none;
+}
+.edit-btn img {
+  width: 20px; height: 20px;
+  display: block;
+}
+/* hover ripple */
+.sidebar-toggle-btn:hover::before,
+.new-task-btn:hover::before,
+.edit-btn:hover::before {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 4px 8px;
+  width: 20px; height: 22px;
+  background-color: rgba(59, 73, 223, 0.1);
+  border-radius: 16px;
+  z-index: -1;
+}
+
+/* typing-dot animation */
+.dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  margin: 0 2px;
+  background: #ccc;
+  border-radius: 50%;
+  animation: blink 1s infinite ease-in-out;
+}
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0; }
+  40%         { opacity: 1; }
+}
+
+/* Adjust margin for boxes previously next to avatars */
+/* Ensure these rules are added or updated */
+.create-event-box,
+.connect-account-section,
+.connected-account-status {
+  margin-left: 0px; /* roughly avatar width + margin */
+  margin-right: 0px; /* Add some right margin for alignment */
+}
+
+/* If these boxes are ever rendered inside a bubble wrapper, avoid double-indentation */
+.agent-message .bubble .create-event-box,
+.agent-message .bubble .connect-account-section,
+.agent-message .bubble .connected-account-status {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+
+/* New: Style for the green success text */
+.create-event-subtitle.success {
+  color: #34A853; /* Google green */
+  font-weight: normal; /* Ensure it's not bold if the default subtitle is */
+}
+
+/* New: Style for the Meeting Created box - Adjust .create-event-icon for checkmark placement */
+.create-event-box {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 8px;
+  max-width: 360px; /* Keep the max-width you provided */
+}
+
+.create-event-icon {
+  flex-shrink: 0;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative; /* Needed to position the checkmark/loader */
+}
+
+.create-event-icon img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* Position the green checkmark relative to the icon */
+.create-event-icon svg {
+  position: absolute;
+  bottom: -4px; /* Adjust vertical position */
+  right: -4px; /* Adjust horizontal position */
+  background: #fff; /* Add white background to make it stand out */
+  border-radius: 50%;
+}
+
+.create-event-details {
+  flex-grow: 1;
+}
+
+.create-event-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #202124;
+}
+
+.create-event-subtitle {
+  font-size: 12px;
+  color: #5f6368;
+  margin-top: 2px;
+}
+
+/* Agent Explanation Styling */
+.agent-explanation {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+  font-size: 11px;
+  color: #5f6368;
+  line-height: 1.4;
+}
+
+/* New: Circular loading animation - Position and size */
+.circular-loader {
+  position: absolute; /* Position relative to .create-event-icon */
+  bottom: -4px; /* Match vertical position of checkmark */
+  right: -4px; /* Match horizontal position of checkmark */
+  width: 18px; /* Match checkmark size */
+  height: 18px; /* Match checkmark size */
+  border: 2px solid #f3f3f3; /* Light grey background border */
+  border-top: 2px solid #3498db; /* Blue spinning border */
+  border-radius: 50%;
+  animation: spin 1s linear infinite; /* Spin animation */
+  background: #fff; /* Add white background like the checkmark */
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* New: Connect Google Account section styling */
+.connect-account-section {
+  margin-top: 20px; /* space below Create Event box */
+  max-width: 360px; /* constrain width */
+}
+
+.connect-account-heading {
+  font-size: 14px;
+  color: #202124;
+  margin-bottom: 12px;
+}
+
+.connect-buttons {
+  display: flex;
+  gap: 8px; /* space between buttons */
+  align-items: center;
+  flex-wrap: wrap; /* allow wrapping if space is tight */
+}
+
+.google-connect-btn {
+  display: flex;
+  align-items: center;
+  background-color: #0096ff; /* Lighter Google blue */
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-decoration: none;
+}
+.google-connect-btn:hover {
+   background-color: #357ae8; /* slightly darker lighter blue on hover */
+}
+.google-connect-btn svg {
+   margin-right: 8px;
+}
+
+
+.skip-btn {
+  background-color: #fff;
+  color: #202124;
+  border: 1px solid #dadce0; /* light grey border */
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+   transition: background-color 0.2s ease;
+}
+.skip-btn:hover {
+    background-color: #f1f3f4; /* light grey hover */
+}
+
+/* New: Connected Account Status styling */
+.connected-account-status {
+  display: flex;
+  align-items: center;
+  background: #f1f3f4; /* Light grey background */
+  border-radius: 20px; /* Pill shape */
+  padding: 6px 12px; /* Adjust padding */
+  margin-top: 12px; /* Space below the heading */
+  max-width: 320px; /* Adjust width as needed */
+  font-size: 14px;
+  color: #5f6368; /* Grey text color */
+}
+
+.connected-account-status svg:first-child { /* Style the Google G icon */
+  margin-right: 6px;
+}
+
+.connected-account-status svg:last-child { /* Style the grey checkmark */
+   margin-left: 4px;
+}
+
+/* Style for the delete button itself */
+.delete-recent-btn {
+  display: none; /* Hide button by default */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 5px;
+  transition: filter 0.2s ease; /* Add a transition for a smoother effect */
+}
+
+.delete-recent-btn img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Add a filter to the image when the button is hovered */
+.delete-recent-btn:hover img {
+  filter: brightness(1.2);
+}
+
+/* Rule to display the delete button when hovering over a list item OR when the list item is active */
+.sidebar li:hover .delete-recent-btn,
+.sidebar li.active .delete-recent-btn {
+    display: flex; /* Show button on hover or when active */
+}
+
+/* Intent Confirmation Styles */
+.intent-confirmation {
+    margin: 8px 0;
+    opacity: 1;
+    transition: opacity 0.3s ease-out;
+}
+
+.intent-confirmation-box {
+    display: inline-block;
+    max-width: 80%;
+}
+
+.intent-confirmation-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    min-width: 200px;
+    animation: contentFadeIn 0.3s ease-out;
+}
+
+/* Fade in animation for the entire content */
+@keyframes contentFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Intent confirmation confirmed state inherits base styling */
+
+.intent-progress-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #d1d5db;
+    border-top-color: #3b49df;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.intent-confirmation-icon {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #22c55e;
+    font-weight: bold;
+    font-size: 14px;
+    animation: iconBounce 0.6s ease-out;
+}
+
+/* Bounce animation for the checkmark icon */
+@keyframes iconBounce {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.intent-confirmation-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+    white-space: nowrap;
+    animation: fadeSlideIn 0.4s ease-out;
+}
+
+/* Add gentle pulsing effect for processing state */
+.intent-confirmation-title.processing {
+    animation: fadeSlideIn 0.4s ease-out, gentlePulse 2s ease-in-out infinite;
+}
+
+/* Gentle pulsing animation */
+@keyframes gentlePulse {
+    0%, 100% {
+        opacity: 0.8;
+        transform: translateX(0);
+    }
+    50% {
+        opacity: 1;
+        transform: translateX(1px);
+    }
+}
+
+/* Fade and slide in animation for intent text */
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.intent-confirmation-content.confirmed .intent-confirmation-title,
+.intent-confirmation-title.confirmed {
+    color: #22c55e;
+    animation: confirmSlideIn 0.5s ease-out;
+}
+
+/* Slide in animation for confirmed intent */
+@keyframes confirmSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Fade out animation for intent confirmation */
+.intent-confirmation.intent-confirmed {
+    animation: fadeOut 0.3s ease-out 1.5s forwards;
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+/* Ensure intent confirmation doesn't interfere with message bubbles */
+.message.intent-confirmation .avatar {
+    opacity: 0.6;
+}
+
+
+/* Hide duplicate agent avatars for consecutive agent messages */
+#chat-box .message.agent-message + .message.agent-message .avatar.agent-avatar {
+    visibility: hidden;
+}
+
+/* Status Indicators */
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    margin: 8px 0 8px 48px;
+    border-radius: 8px;
+    font-size: 13px;
+    animation: slideIn 0.3s ease;
+    max-width: fit-content;
+    transition: opacity 0.3s ease;
+}
+
+.status-indicator.status-loading {
+    background: #f5f5f5;
+    color: #666;
+}
+
+.status-indicator.status-success {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status-indicator.status-warning {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.status-indicator .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #e0e0e0;
+    border-top-color: #666;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.status-indicator .status-icon {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.status-text {
+    line-height: 1.4;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Alternative Time Buttons */
+.alt-time-btn {
+    background: #f0f0f0;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    padding: 6px 12px;
+    margin: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.alt-time-btn:hover {
+    background: #4285f4;
+    color: white;
+    border-color: #4285f4;
+}
+
+/* 
+   --------------------------------------------------
+   STYLES FROM base.html (Navigation & Actions)
+   --------------------------------------------------
+*/
+.nav-action-link {
+    position: relative;
+    color: #3b49df;
+    text-decoration: none;
+    font-size: 16px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    font-weight: 400; /* Light/Normal weight */
+}
+.nav-action-link::after {
+    content: '';
+    position: absolute;
+    left: 0; bottom: -2px;
+    width: 0; height: 2px;
+    background-color: #3b49df;
+    transition: width 0.3s ease;
+}
+.nav-action-link:hover::after {
+    width: 100%;
+}
+
+/* 
+   --------------------------------------------------
+   STYLES FROM settings.html (Notification Settings)
+   --------------------------------------------------
+*/
+.settings-container {
+    flex: 1;
+    padding: 40px;
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    overflow-y: auto;
+}
+.settings-card {
+    background-color: #2d2d2d;
+    border-radius: 12px;
+    padding: 30px;
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+.settings-header {
+    margin-bottom: 30px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 20px;
+}
+.settings-header h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: #fff;
+}
+.form-group {
+    margin-bottom: 25px;
+}
+.form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #bbb;
+}
+.form-input {
+    width: 100%;
+    padding: 12px;
+    background-color: #1a1a1a;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+.form-input:focus {
+    border-color: #007bff;
+    outline: none;
+}
+.form-text {
+    font-size: 0.85rem;
+    color: #888;
+    margin-top: 5px;
+}
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.checkbox-input {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    cursor: pointer;
+}
+.btn-save {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    width: 100%;
+}
+.btn-save:hover {
+    background-color: #0056b3;
+}
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+}
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* 
+   --------------------------------------------------
+   STYLES FROM settings.html (intl-tel-input)
+   --------------------------------------------------
+*/
+/* Dark mode adjustments for intl-tel-input */
+.iti { 
+    width: 100%; 
+    display: block; /* Ensure block display */
+}
+
+/* Ensure the dropdown menu is dark */
+.iti__country-list {
+    background-color: #2d2d2d !important;
+    border: 1px solid #444 !important;
+    color: #e0e0e0 !important;
+    white-space: normal; /* Handle long country names */
+    z-index: 100 !important; /* Ensure it sits on top */
+}
+
+/* Hover state for countries */
+.iti__country-list .iti__country:hover,
+.iti__country-list .iti__country.iti__highlight {
+    background-color: #444 !important;
+}
+
+/* Text colors */
+.iti__country-name { color: #e0e0e0 !important; }
+.iti__dial-code { color: #aaa !important; }
+.iti__selected-dial-code { color: #e0e0e0 !important; }
+
+/* Input specific overrides */
+#whatsapp_number {
+    color: #fff !important;
+    background-color: #1a1a1a !important; /* Match form-input */
+    /* Ensure no other styles override the padding set by the library (inline) */
+    /* We can't set padding-left because it's dynamic, but we can ensure standard padding doesn't conflict strangely */
+}
+
+/* == Settings Page Styles == */
+
+/* Custom styling for select to ensure visible arrow in dark mode */
+select.form-input {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #333; /* Dark background */
+    color: white;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 0.65em auto;
+    padding-right: 2.5rem;
+}
+
+/* Ensure options have dark background too */
+
+/* Ensure options have dark background too */
+select.form-input option {
+    background-color: #333;
+    color: white;
+}
+
+
+/* Nav Controls (Settings/Logout) */
+.nav-controls {
+    position: absolute;
+    right: 16px;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* == Mobile Responsiveness == */
+@media (max-width: 768px) {
+    /* Sidebar becomes a fixed overlay */
+    .sidebar-wrapper {
+        position: fixed;
+        top: 50px;
+        left: 0;
+        bottom: 0;
+        height: calc(100% - 50px);
+        z-index: 1000;
+        transition: transform 0.3s ease;
+    }
+    
+    /* Ensure it sits on top when open */
+    .sidebar-wrapper:not(.collapsed) {
+        width: 250px; 
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    }
+
+    /* Reduce interference when collapsed */
+    .sidebar-wrapper.collapsed {
+        width: 0;
+        overflow: hidden;
+    }
+    
+    /* Adjust main content area */
+    .chat-panel {
+        width: 100%;
+        border-left: none;
+    }
+    
+    /* Navbar Tweaks */
+    .nav-user .username {
+        display: none; /* Hide username to save space */
+    }
+    
+    /* Hide visual title on mobile to prevent overlap with controls */
+    .nav-title {
+        display: none;
+    }
+    
+    /* Ensure controls are visible */
+    .nav-controls {
+        gap: 15px; /* Reduce gap slightly on mobile */
+    }
+    
+    /* Settings Page Tweaks */
+    .settings-container {
+        padding: 16px;
+    }
+    .settings-card {
+        padding: 20px;
+        margin-top: 0;
+    }
+    
+    /* Chat Input Tweaks */
+    .chat-input {
+        padding: 16px; /* Add horizontal padding on mobile */
+    }
+}
+
+/* Markdown Styling within Chat Bubbles */
+.message-bubble h1, .bubble h1 { font-size: 1.4em; margin: 10px 0 5px 0; }
+.message-bubble h2, .bubble h2 { font-size: 1.3em; margin: 8px 0 5px 0; }
+.message-bubble h3, .bubble h3 { font-size: 1.2em; margin: 6px 0 4px 0; }
+.message-bubble h4, .bubble h4 { font-size: 1.1em; margin: 5px 0 3px 0; }
+.message-bubble p, .bubble p { margin-bottom: 8px; }
+.message-bubble ul, .bubble ul, 
+.message-bubble ol, .bubble ol { margin-left: 20px; margin-bottom: 8px; }
+.message-bubble li, .bubble li { margin-bottom: 4px; }
+
+/* Flash Messages (System Alerts) */
+.messages-container {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    width: auto;
+    max-width: 400px;
+}
+
+.messages-container .alert {
+    margin-bottom: 10px;
+    padding: 10px 15px;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    animation: slideIn 0.3s ease-out;
+}
+
