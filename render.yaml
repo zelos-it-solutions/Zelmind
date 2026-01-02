@@ -1,9 +1,14 @@
+databases:
+  - name: zelmind-db
+    region: virginia
+    plan: free
+
 services:
-  # Web Service: Handles HTTP requests
+  # Web Service: Matches existing 'Zelmind' service
   - type: web
-    name: reminder-agent-web
+    name: Zelmind
     env: python
-    region: oregon
+    region: virginia
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn project.wsgi:application
@@ -11,16 +16,24 @@ services:
       - key: PYTHON_VERSION
         value: 3.9.18
       - key: ENABLE_REMINDER_THREAD
-        value: false  # Explicitly disable in-process thread
+        value: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: zelmind-db
+          property: connectionString
 
   # Worker Service: Handles Background Reminders
   - type: worker
-    name: reminder-agent-worker
+    name: zelmind-worker
     env: python
-    region: oregon
+    region: virginia
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: python manage.py run_reminders
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.18
+      - key: DATABASE_URL
+        fromDatabase:
+          name: zelmind-db
+          property: connectionString
