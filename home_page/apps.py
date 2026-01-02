@@ -9,7 +9,7 @@ class HomePageConfig(AppConfig):
         import home_page.signals_debug
         
         # Start the background reminder worker if not running via management command
-        # Check if we are in a runserver/gunicorn process (not migration or shell)
+        # Check if in a runserver/gunicorn process (not migration or shell)
         import sys
         is_manage_py = any('manage.py' in arg for arg in sys.argv)
         is_runserver = any('runserver' in arg for arg in sys.argv)
