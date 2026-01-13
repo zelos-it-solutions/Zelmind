@@ -203,8 +203,13 @@ def process_user_reminders(pref):
                     email_body_text = f"{ai_message}\n\nBest,\nReminder Agent"
                     
                     success_email = False
+                    logger.info(f"DEBUG: Checking Email for event {event_id}. Enabled: {pref.email_enabled}, AlreadySent: {already_notified_email}")
                     try:
                         # Check if SMTP is configured
+                        has_user = bool(settings.EMAIL_HOST_USER)
+                        has_pw = bool(settings.EMAIL_HOST_PASSWORD)
+                        logger.info(f"DEBUG: SMTP Config - User: {has_user}, Password: {has_pw}")
+                        
                         if settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD:
                             from django.core.mail import send_mail
                             send_mail(
