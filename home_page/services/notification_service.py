@@ -162,7 +162,19 @@ def process_user_reminders(pref):
                     # Append interactive footer
                     wa_body = f"{ai_message}\n\nReply:\n- *SNOOZE 10* to snooze 10m\n- *OFF* to disable reminders"
                     
-                    success = send_whatsapp_message(pref.whatsapp_number, wa_body)
+                    template_sid = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_SID', None)
+                    if template_sid:
+                        # Use Template (Bypass 24h window)
+                        # Assumes template has variable {{1}} for the body
+                        success = send_whatsapp_message(
+                            pref.whatsapp_number, 
+                            content_sid=template_sid, 
+                            content_variables=json.dumps({'1': wa_body})
+                        )
+                    else:
+                        # Use Session Message (Standard)
+                        success = send_whatsapp_message(pref.whatsapp_number, body=wa_body)
+                        
                     status_val = 'sent' if success else 'failed'
                     
                     # Log attempt
@@ -261,7 +273,16 @@ def check_and_send_morning_briefings():
                      
                      # 3. Send via WhatsApp
                      if pref.whatsapp_number:
-                         send_whatsapp_message(pref.whatsapp_number, briefing_msg)
+                         template_sid = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_SID', None)
+                         if template_sid:
+                              send_whatsapp_message(
+                                  pref.whatsapp_number, 
+                                  content_sid=template_sid, 
+                                  content_variables=json.dumps({'1': briefing_msg})
+                              )
+                         else:
+                              send_whatsapp_message(pref.whatsapp_number, body=briefing_msg)
+                         
                          logger.info(f"Sent morning briefing to {pref.user.username}")
                      else:
                          logger.warning(f"User {pref.user.username} has no WhatsApp number for briefing.")
