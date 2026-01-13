@@ -78,10 +78,12 @@ def check_and_send_reminders():
         Q(whatsapp_enabled=True) | Q(email_enabled=True)
     ).select_related('user')
 
-    # Use ThreadPoolExecutor for concurrent processing
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        for pref in preferences:
-            executor.submit(process_user_reminders, pref)
+    # Run sequentially to avoid SSL/Threading issues
+    for pref in preferences:
+        try:
+            process_user_reminders(pref)
+        except Exception as e:
+            logger.error(f"Error processing user {pref.user}: {e}")
 
 def process_user_reminders(pref):
     """
@@ -215,7 +217,7 @@ def process_user_reminders(pref):
                             send_mail(
                                 subject=subject,
                                 message=email_body_text,
-                                from_email=f"Reminder Agent <{settings.EMAIL_HOST_USER}>",
+                                from_email=settings.EMAIL_HOST_USER, # Simplify to just email
                                 recipient_list=[to_email],
                                 fail_silently=False,
                             )
