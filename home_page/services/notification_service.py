@@ -39,20 +39,29 @@ def send_whatsapp_message(to_number, body=None, content_sid=None, content_variab
             to_number = f"whatsapp:{to_number}"
 
         if content_sid:
-             message = client.messages.create(
-                from_=from_number,
-                to=to_number,
-                content_sid=content_sid,
-                content_variables=content_variables
-            )
-        else:
+            try:
+                 message = client.messages.create(
+                    from_=from_number,
+                    to=to_number,
+                    content_sid=content_sid,
+                    content_variables=content_variables
+                )
+                 logger.info(f"WhatsApp template message sent to {to_number}: {message.sid}")
+                 return True
+            except Exception as e:
+                logger.warning(f"Failed to send WhatsApp template to {to_number}: {e}. Falling back to standard message.")
+                # Fall through to body send
+
+        if body:
             message = client.messages.create(
                 from_=from_number,
                 body=body,
                 to=to_number
             )
-        logger.info(f"WhatsApp message sent to {to_number}: {message.sid}")
-        return True
+            logger.info(f"WhatsApp message sent to {to_number}: {message.sid}")
+            return True
+            
+        return False
     except Exception as e:
         logger.error(f"Failed to send WhatsApp message to {to_number}: {e}")
         return False
@@ -168,6 +177,7 @@ def process_user_reminders(pref):
                         # Assumes template has variable {{1}} for the body
                         success = send_whatsapp_message(
                             pref.whatsapp_number, 
+                            body=wa_body,
                             content_sid=template_sid, 
                             content_variables=json.dumps({'1': wa_body})
                         )
@@ -276,7 +286,8 @@ def check_and_send_morning_briefings():
                          template_sid = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_SID', None)
                          if template_sid:
                               send_whatsapp_message(
-                                  pref.whatsapp_number, 
+                                  pref.whatsapp_number,
+                                  body=briefing_msg, 
                                   content_sid=template_sid, 
                                   content_variables=json.dumps({'1': briefing_msg})
                               )
