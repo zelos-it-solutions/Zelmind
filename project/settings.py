@@ -222,7 +222,7 @@ TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
 TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
 TWILIO_WHATSAPP_TEMPLATE_SID = os.getenv('TWILIO_WHATSAPP_TEMPLATE_SID')
 
-# Email Settings (SMTP)
+# Email Settings (SMTP - for local development)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
@@ -231,6 +231,11 @@ EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False') == 'True'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# ZeptoMail Settings (for production - uses HTTPS API, not blocked by Railway)
+ZEPTOMAIL_API_TOKEN = os.getenv('ZEPTOMAIL_API_TOKEN')
+ZEPTOMAIL_FROM_EMAIL = os.getenv('ZEPTOMAIL_FROM_EMAIL') or EMAIL_HOST_USER
+ZEPTOMAIL_FROM_NAME = os.getenv('ZEPTOMAIL_FROM_NAME', 'Reminder Agent')
 
 LOGGING = {
     'version': 1,

@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.utils import timezone
-import socket
 from datetime import timedelta
 from twilio.rest import Client
 from home_page.models import NotificationPreference, SentNotification
@@ -10,9 +9,74 @@ from django.db.models import Q
 from home_page.services.ai_agent import AIAgent
 from concurrent.futures import ThreadPoolExecutor
 from django.core.cache import cache
-import json 
+import json
+import requests
 
 logger = logging.getLogger(__name__)
+
+
+def send_email_zeptomail(to_email, subject, body):
+    """
+    Sends an email using ZeptoMail (Zoho's transactional email API).
+    Uses HTTPS so it works on Railway Hobby plan (SMTP ports are blocked).
+    
+    Required settings:
+    - ZEPTOMAIL_API_TOKEN: Your ZeptoMail Send Mail token
+    - ZEPTOMAIL_FROM_EMAIL: The verified sender email address
+    - ZEPTOMAIL_FROM_NAME: (Optional) The sender display name
+    """
+    api_token = getattr(settings, 'ZEPTOMAIL_API_TOKEN', None)
+    from_email = getattr(settings, 'ZEPTOMAIL_FROM_EMAIL', None) or getattr(settings, 'EMAIL_HOST_USER', None)
+    from_name = getattr(settings, 'ZEPTOMAIL_FROM_NAME', 'Reminder Agent')
+    
+    if not api_token:
+        logger.error("ZEPTOMAIL_API_TOKEN not configured")
+        return False
+    
+    if not from_email:
+        logger.error("ZEPTOMAIL_FROM_EMAIL not configured")
+        return False
+    
+    url = "https://api.zeptomail.com/v1.1/email"
+    
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": api_token  # ZeptoMail uses the token directly, not "Bearer <token>"
+    }
+    
+    payload = {
+        "from": {
+            "address": from_email,
+            "name": from_name
+        },
+        "to": [
+            {
+                "email_address": {
+                    "address": to_email
+                }
+            }
+        ],
+        "subject": subject,
+        "textbody": body
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
+        
+        if response.status_code == 200 or response.status_code == 201:
+            logger.info(f"ZeptoMail: Email sent to {to_email}")
+            return True
+        else:
+            logger.error(f"ZeptoMail API error: {response.status_code} - {response.text}")
+            return False
+            
+    except requests.exceptions.Timeout:
+        logger.error(f"ZeptoMail: Request timed out for {to_email}")
+        return False
+    except Exception as e:
+        logger.error(f"ZeptoMail: Failed to send email to {to_email}: {e}")
+        return False
 
 
 def send_whatsapp_message(to_number, body=None, content_sid=None, content_variables=None):
@@ -206,41 +270,44 @@ def process_user_reminders(pref):
                     email_body_text = f"{ai_message}\n\nBest,\nReminder Agent"
                     
                     success_email = False
-                    logger.info(f"DEBUG: Checking Email for event {event_id}. Enabled: {pref.email_enabled}, AlreadySent: {already_notified_email}")
-                    try:
-                        # Check if SMTP is configured
-                        has_user = bool(settings.EMAIL_HOST_USER)
-                        has_pw = bool(settings.EMAIL_HOST_PASSWORD)
-                        logger.info(f"DEBUG: SMTP Config - User: {has_user}, Password: {has_pw}")
-                        
-                        if settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD:
-                            print(f"!!! ABOUT TO SEND MAIL TO {to_email} !!!", flush=True)
-                            try:
-                                # Force timeout to prevent hanging
-                                socket.setdefaulttimeout(20)
-                                from django.core.mail import send_mail
-                                send_mail(
-                                    subject=subject,
-                                    message=email_body_text,
-                                    from_email=settings.EMAIL_HOST_USER, 
-                                    recipient_list=[to_email],
-                                    fail_silently=False,
-                                )
-                                print("!!! MAIL SENT SUCCESSFULLY !!!", flush=True)
-                                logger.info(f"SMTP Email sent to {to_email} for event {summary}")
-                                success_email = True
-                            except Exception as em_err:
-                                print(f"!!! MAIL FAILED: {em_err} !!!", flush=True)
-                                raise em_err
-                        else:
-                            # Fallback to OAuth (User's own Gmail)
-                            cal_service.send_email(to_email, subject, email_body_text)
-                            logger.info(f"OAuth Email sent to {to_email} for event {summary}")
-                            success_email = True
+                    logger.info(f"Sending email for event {event_id} to {to_email}")
+                    
+                    # Try ZeptoMail API first (works on Railway - uses HTTPS, not blocked SMTP ports)
+                    if getattr(settings, 'ZEPTOMAIL_API_TOKEN', None):
+                        success_email = send_email_zeptomail(to_email, subject, email_body_text)
+                        if success_email:
+                            logger.info(f"ZeptoMail email sent to {to_email} for event {summary}")
+                    
+                    # Fallback to SMTP if ZeptoMail not configured or failed (for local dev)
+                    if not success_email and settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD:
+                        try:
+                            from django.core.mail import get_connection, EmailMessage
                             
-                    except Exception as e:
-                        logger.error(f"Failed to send email to {to_email}: {e}")
-                        success_email = False
+                            # Create connection with explicit timeout (10s)
+                            connection = get_connection(
+                                backend='django.core.mail.backends.smtp.EmailBackend',
+                                host=settings.EMAIL_HOST,
+                                port=settings.EMAIL_PORT,
+                                username=settings.EMAIL_HOST_USER,
+                                password=settings.EMAIL_HOST_PASSWORD,
+                                use_tls=settings.EMAIL_USE_TLS,
+                                use_ssl=settings.EMAIL_USE_SSL,
+                                timeout=10  # Short timeout to fail fast
+                            )
+                            
+                            email = EmailMessage(
+                                subject=subject,
+                                body=email_body_text,
+                                from_email=settings.EMAIL_HOST_USER,
+                                to=[to_email],
+                                connection=connection
+                            )
+                            email.send(fail_silently=False)
+                            logger.info(f"SMTP Email sent to {to_email} for event {summary}")
+                            success_email = True
+                        except Exception as smtp_err:
+                            logger.error(f"SMTP email failed to {to_email}: {smtp_err}")
+                            success_email = False
                     
                     status_val = 'sent' if success_email else 'failed'
                     SentNotification.objects.create(
