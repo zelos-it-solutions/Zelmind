@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.utils import timezone
+import socket
 from datetime import timedelta
 from twilio.rest import Client
 from home_page.models import NotificationPreference, SentNotification
@@ -213,16 +214,24 @@ def process_user_reminders(pref):
                         logger.info(f"DEBUG: SMTP Config - User: {has_user}, Password: {has_pw}")
                         
                         if settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD:
-                            from django.core.mail import send_mail
-                            send_mail(
-                                subject=subject,
-                                message=email_body_text,
-                                from_email=settings.EMAIL_HOST_USER, # Simplify to just email
-                                recipient_list=[to_email],
-                                fail_silently=False,
-                            )
-                            logger.info(f"SMTP Email sent to {to_email} for event {summary}")
-                            success_email = True
+                            print(f"!!! ABOUT TO SEND MAIL TO {to_email} !!!", flush=True)
+                            try:
+                                # Force timeout to prevent hanging
+                                socket.setdefaulttimeout(20)
+                                from django.core.mail import send_mail
+                                send_mail(
+                                    subject=subject,
+                                    message=email_body_text,
+                                    from_email=settings.EMAIL_HOST_USER, 
+                                    recipient_list=[to_email],
+                                    fail_silently=False,
+                                )
+                                print("!!! MAIL SENT SUCCESSFULLY !!!", flush=True)
+                                logger.info(f"SMTP Email sent to {to_email} for event {summary}")
+                                success_email = True
+                            except Exception as em_err:
+                                print(f"!!! MAIL FAILED: {em_err} !!!", flush=True)
+                                raise em_err
                         else:
                             # Fallback to OAuth (User's own Gmail)
                             cal_service.send_email(to_email, subject, email_body_text)
