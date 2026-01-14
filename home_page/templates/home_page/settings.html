@@ -65,25 +65,25 @@
                 <label for="morning_briefing_enabled" style="cursor:pointer">Enable Daily Morning Briefing</label>
             </div>
 
-            <div class="form-group" id="briefing-time-group" {% if not preferences.morning_briefing_enabled%}style="display:none;" {% endif %}>
+            <div class="form-group" id="briefing-time-group" {% if not preferences.morning_briefing_enabled %}style="display:none;"{% endif %}>
                 <label class="form-label" for="morning_briefing_time">Briefing Time (Morning)</label>
                 <div class="select-wrapper">
                     <select id="morning_briefing_time" name="morning_briefing_time" class="form-input">
                         {% with current_time=preferences.morning_briefing_time|time:'H:i' %}
-                        <option value="05:00" {% if current_time=='05:00' %}selected{% endif %}>05:00 AM</option>
-                        <option value="05:30" {% if current_time=='05:30' %}selected{% endif %}>05:30 AM</option>
-                        <option value="06:00" {% if current_time=='06:00' %}selected{% endif %}>06:00 AM</option>
-                        <option value="06:30" {% if current_time=='06:30' %}selected{% endif %}>06:30 AM</option>
-                        <option value="07:00" {% if current_time=='07:00' %}selected{% endif %}>07:00 AM</option>
-                        <option value="07:30" {% if current_time=='07:30' %}selected{% endif %}>07:30 AM</option>
-                        <option value="08:00" {% if current_time=='08:00' %}selected{% endif %}>08:00 AM</option>
-                        <option value="08:30" {% if current_time=='08:30' %}selected{% endif %}>08:30 AM</option>
-                        <option value="09:00" {% if current_time=='09:00' %}selected{% endif %}>09:00 AM</option>
-                        <option value="09:30" {% if current_time=='09:30' %}selected{% endif %}>09:30 AM</option>
-                        <option value="10:00" {% if current_time=='10:00' %}selected{% endif %}>10:00 AM</option>
-                        <option value="10:30" {% if current_time=='10:30' %}selected{% endif %}>10:30 AM</option>
-                        <option value="11:00" {% if current_time=='11:00' %}selected{% endif %}>11:00 AM</option>
-                        <option value="11:30" {% if current_time=='11:30' %}selected{% endif %}>11:30 AM</option>
+                        <option value="05:00" {% if current_time == '05:00' %}selected{% endif %}>05:00 AM</option>
+                        <option value="05:30" {% if current_time == '05:30' %}selected{% endif %}>05:30 AM</option>
+                        <option value="06:00" {% if current_time == '06:00' %}selected{% endif %}>06:00 AM</option>
+                        <option value="06:30" {% if current_time == '06:30' %}selected{% endif %}>06:30 AM</option>
+                        <option value="07:00" {% if current_time == '07:00' %}selected{% endif %}>07:00 AM</option>
+                        <option value="07:30" {% if current_time == '07:30' %}selected{% endif %}>07:30 AM</option>
+                        <option value="08:00" {% if current_time == '08:00' %}selected{% endif %}>08:00 AM</option>
+                        <option value="08:30" {% if current_time == '08:30' %}selected{% endif %}>08:30 AM</option>
+                        <option value="09:00" {% if current_time == '09:00' %}selected{% endif %}>09:00 AM</option>
+                        <option value="09:30" {% if current_time == '09:30' %}selected{% endif %}>09:30 AM</option>
+                        <option value="10:00" {% if current_time == '10:00' %}selected{% endif %}>10:00 AM</option>
+                        <option value="10:30" {% if current_time == '10:30' %}selected{% endif %}>10:30 AM</option>
+                        <option value="11:00" {% if current_time == '11:00' %}selected{% endif %}>11:00 AM</option>
+                        <option value="11:30" {% if current_time == '11:30' %}selected{% endif %}>11:30 AM</option>
                         {% endwith %}
                     </select>
                 </div>
