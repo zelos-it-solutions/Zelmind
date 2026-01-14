@@ -235,7 +235,7 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 # ZeptoMail Settings (for production - uses HTTPS API, not blocked by Railway)
 ZEPTOMAIL_API_TOKEN = os.getenv('ZEPTOMAIL_API_TOKEN')
 ZEPTOMAIL_FROM_EMAIL = os.getenv('ZEPTOMAIL_FROM_EMAIL') or EMAIL_HOST_USER
-ZEPTOMAIL_FROM_NAME = os.getenv('ZEPTOMAIL_FROM_NAME', 'Reminder Agent')
+ZEPTOMAIL_FROM_NAME = os.getenv('ZEPTOMAIL_FROM_NAME', 'Zelmind')
 
 LOGGING = {
     'version': 1,

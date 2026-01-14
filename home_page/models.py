@@ -42,6 +42,9 @@ class NotificationPreference(models.Model):
     morning_briefing_enabled = models.BooleanField(default=True)
     morning_briefing_time = models.TimeField(default="08:00")
     
+    # User's timezone for proper briefing time handling (IANA format, e.g., 'Africa/Lagos')
+    user_timezone = models.CharField(max_length=50, default="UTC", help_text="IANA timezone e.g. Africa/Lagos")
+    
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):

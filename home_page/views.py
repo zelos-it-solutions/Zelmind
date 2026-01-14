@@ -2993,7 +2993,12 @@ def settings_view(request):
                     datetime.strptime(briefing_time_str, '%H:%M')
                     prefs.morning_briefing_time = briefing_time_str
                 except ValueError:
-                    pass 
+                    pass
+            
+            # Save user's timezone for correct morning briefing timing
+            user_tz = request.POST.get("user_timezone")
+            if user_tz:
+                prefs.user_timezone = user_tz
             
             prefs.save()
             messages.success(request, "Preferences saved successfully!")

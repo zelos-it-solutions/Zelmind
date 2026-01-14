@@ -329,17 +329,28 @@ def check_and_send_morning_briefings():
     Should be called periodically (e.g., every minute).
     """
     # logger.info("Checking for morning briefings...") # Verbose
-    now = timezone.now()
-    current_time = now.time()
+    now_utc = timezone.now()
     
     # Filter users with morning briefing enabled
     preferences = NotificationPreference.objects.filter(morning_briefing_enabled=True).select_related('user')
     
     for pref in preferences:
         briefing_time = pref.morning_briefing_time
-        # Check if current hour/minute matches (handling minute granularity)
-        if briefing_time.hour == current_time.hour and briefing_time.minute == current_time.minute:
-             today_str = now.strftime("%Y-%m-%d")
+        
+        # Get user's timezone (default to UTC if not set)
+        try:
+            from zoneinfo import ZoneInfo
+            user_tz = ZoneInfo(pref.user_timezone or 'UTC')
+        except Exception:
+            user_tz = timezone.utc
+        
+        # Convert current UTC time to user's local time
+        now_local = now_utc.astimezone(user_tz)
+        current_time_local = now_local.time()
+        
+        # Check if current LOCAL hour/minute matches the user's configured briefing time
+        if briefing_time.hour == current_time_local.hour and briefing_time.minute == current_time_local.minute:
+             today_str = now_local.strftime("%Y-%m-%d")
              cache_key = f"morning_briefing_{pref.user.id}_{today_str}"
              
              if not cache.get(cache_key):
@@ -352,8 +363,8 @@ def check_and_send_morning_briefings():
                         logger.warning(f"Skipping briefing for {pref.user.username}, calendar service error: {e}")
                         continue
 
-                     start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
-                     end_of_day = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+                     start_of_day = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
+                     end_of_day = now_local.replace(hour=23, minute=59, second=59, microsecond=999999)
                      
                      events = cal_service.list_events(
                          time_min=start_of_day.isoformat(),
