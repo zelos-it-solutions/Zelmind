@@ -65,8 +65,7 @@
                 <label for="morning_briefing_enabled" style="cursor:pointer">Enable Daily Morning Briefing</label>
             </div>
 
-            <div class="form-group" id="briefing-time-group" {% if not preferences.morning_briefing_enabled
-                %}style="display:none;" {% endif %}>
+            <div class="form-group" id="briefing-time-group" {% if not preferences.morning_briefing_enabled%}style="display:none;" {% endif %}>
                 <label class="form-label" for="morning_briefing_time">Briefing Time (Morning)</label>
                 <div class="select-wrapper">
                     <select id="morning_briefing_time" name="morning_briefing_time" class="form-input">
