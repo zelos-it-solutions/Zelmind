@@ -79,7 +79,7 @@ def send_email_zeptomail(to_email, subject, body):
         return False
 
 
-def send_whatsapp_message(to_number, body=None, content_sid=None, content_variables=None):
+def send_whatsapp_message(to_number, body=None, content_sid=None, content_variables=None, header_text=None):
     """
     Sends a WhatsApp message using Twilio.
     Supports raw body OR Content Templates (content_sid + content_variables).
@@ -235,18 +235,24 @@ def process_user_reminders(pref):
                 ai_message = ai_agent.generate_reminder_message(summary, start_raw, user.username)
                 
                 if pref.whatsapp_enabled and pref.whatsapp_number and not already_notified_whatsapp:
-                    # Append interactive footer
-                    wa_body = f"{ai_message}\n\nReply:\n- *SNOOZE 10* to snooze 10m\n- *OFF* to disable reminders"
+                    wa_body = ai_message
                     
                     template_sid = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_SID', None)
                     if template_sid:
-                        # Use Template (Bypass 24h window)
-                        # Assumes template has variable {{1}} for the body
+                        var_name_body = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_VARIABLE_BODY', '1')
+                        var_name_header = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_VARIABLE_HEADER', '2')
+                        
+                        flat_body = wa_body.replace('\n', ' | ')
+                        
+                        variables = {var_name_body: flat_body}
+                        # Header is "Event Reminder"
+                        variables[var_name_header] = "Event Reminder"
+
                         success = send_whatsapp_message(
                             pref.whatsapp_number, 
-                            body=wa_body,
+                            body=wa_body, # Fallback
                             content_sid=template_sid, 
-                            content_variables=json.dumps({'1': wa_body})
+                            content_variables=json.dumps(variables)
                         )
                     else:
                         # Use Session Message (Standard)
@@ -379,12 +385,20 @@ def check_and_send_morning_briefings():
                      if pref.whatsapp_number:
                          template_sid = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_SID', None)
                          if template_sid:
-                              send_whatsapp_message(
-                                  pref.whatsapp_number,
-                                  body=briefing_msg, 
-                                  content_sid=template_sid, 
-                                  content_variables=json.dumps({'1': briefing_msg})
-                              )
+                               var_name_body = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_VARIABLE_BODY', '1')
+                               var_name_header = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_VARIABLE_HEADER', '2')
+                               
+                               flat_briefing = briefing_msg.replace('\n', ' | ')
+                               
+                               variables = {var_name_body: flat_briefing}
+                               variables[var_name_header] = "Morning Briefing"
+                               
+                               send_whatsapp_message(
+                                   pref.whatsapp_number,
+                                   body=briefing_msg, 
+                                   content_sid=template_sid, 
+                                   content_variables=json.dumps(variables)
+                               )
                          else:
                               send_whatsapp_message(pref.whatsapp_number, body=briefing_msg)
                          
