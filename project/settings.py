@@ -221,6 +221,7 @@ TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
 TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
 TWILIO_WHATSAPP_TEMPLATE_SID = os.getenv('TWILIO_WHATSAPP_TEMPLATE_SID')
+WHATSAPP_TEST_NUMBER = os.getenv('WHATSAPP_TEST_NUMBER')
 
 # Email Settings (SMTP - for local development)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

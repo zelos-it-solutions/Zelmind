@@ -240,7 +240,7 @@ def process_user_reminders(pref):
                     template_sid = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_SID', None)
                     if template_sid:
                         var_name_body = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_VARIABLE_BODY', '1')
-                        var_name_header = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_VARIABLE_HEADER', None)
+                        var_name_header = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_VARIABLE_HEADER', '2')
                         
                         flat_body = wa_body.replace('\n', ' | ')
                         # Truncate to avoid length limits (Twilio ~1024 chars for variable)
@@ -248,9 +248,8 @@ def process_user_reminders(pref):
                             flat_body = flat_body[:997] + "..."
                         
                         variables = {var_name_body: flat_body}
-                        # Header is "Event Reminder" (Only if configured)
-                        if var_name_header:
-                            variables[var_name_header] = "Event Reminder"
+                        # Header is "Event Reminder"
+                        variables[var_name_header] = "Event Reminder"
 
                         success = send_whatsapp_message(
                             pref.whatsapp_number, 
@@ -397,7 +396,7 @@ def check_and_send_morning_briefings():
                          template_sid = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_SID', None)
                          if template_sid:
                                 var_name_body = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_VARIABLE_BODY', '1')
-                                var_name_header = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_VARIABLE_HEADER', None)
+                                var_name_header = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_VARIABLE_HEADER', '2')
                                 
                                 flat_briefing = briefing_msg.replace('\n', ' | ')
                                 # Truncate briefing
@@ -405,8 +404,7 @@ def check_and_send_morning_briefings():
                                     flat_briefing = flat_briefing[:997] + "..."
                                 
                                 variables = {var_name_body: flat_briefing}
-                                if var_name_header:
-                                    variables[var_name_header] = "Morning Briefing"
+                                variables[var_name_header] = "Morning Briefing"
                                
                                 send_whatsapp_message(
                                    pref.whatsapp_number,

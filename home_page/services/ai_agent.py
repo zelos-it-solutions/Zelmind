@@ -397,8 +397,13 @@ class AIAgent:
                     SINGLE JSON RESPONSE FORMAT:
                     Return ONLY one JSON object, nothing else before or after it.
                     
-                    ACTIONS: create_event, list_events, delete_event, find_free_slots, list_calendars
-                    
+                    ACTIONS: create_event, list_events, delete_event, update_event, find_free_slots, list_calendars
+
+                    CRITICAL TIME HANDLING:
+                    - If end time < start time (e.g., start 23:00, end 01:00), assume the end is on the NEXT DAY.
+                    - "11pm today to 1am tomorrow" -> Start: today 23:00, End: tomorrow 01:00.
+                    - ALWAYS calculate precise dates. Do not just blindly copy the date field.
+
                     For list_events:
                     - Extract time range from user's request ("this week", "tomorrow", "next Monday", "this month", "this year", "month")
                     - Extract search terms/keywords ONLY from the CURRENT user message (not from conversation history)

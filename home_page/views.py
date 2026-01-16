@@ -720,6 +720,21 @@ def chat_process(request):
                 if 'timeZone' not in end_data:
                     end_data['timeZone'] = client_tz_name or 'UTC'
 
+                # Validate Time Range locally before calling API
+                try:
+                    s_dt = start_data.get('dateTime') or start_data.get('date')
+                    e_dt = end_data.get('dateTime') or end_data.get('date')
+                    if s_dt and e_dt and str(s_dt) >= str(e_dt):
+                         return JsonResponse({
+                            'type': 'text',
+                            'response': "I noticed the end time is before the start time. Please provide a valid time range (e.g., '11:20pm today to 12:20am tomorrow').",
+                            'content': {},
+                            'intent': 'calendar',
+                            'convo_id': str(convo.id)
+                        })
+                except Exception:
+                    pass 
+
                 event_body = {
                     'summary': confirmation_data.get('summary'),
                     'start': start_data,
@@ -848,7 +863,9 @@ def chat_process(request):
                 
                 # Check for specific Google API errors
                 if "Invalid recurrence rule" in str(e):
-                    error_msg = "Sorry, the recurrence pattern was invalid. Please try again with a simpler repetition (e.g., 'every Monday')."
+                     error_msg = "Sorry, the recurrence pattern was invalid. Please try again with a simpler repetition (e.g., 'every Monday')."
+                elif "timeRangeEmpty" in str(e) or "specified time range is empty" in str(e):
+                     error_msg = "I couldn't create that event because the end time is before the start time. Please try again."
 
                 Message.objects.create(
                     conversation=convo,
