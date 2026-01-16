@@ -985,34 +985,60 @@ class AIAgent:
         # Fallback if AI fails
         return f"Hi {user_name}, reminder: your event '{event_summary}' is starting at {start_dt}."
 
-    def generate_morning_briefing(self, user_name: str, events: list, weather_info: str = "Clear skies expected") -> str:
+        return self._get_claude_chat_response(
+            messages=[{"role": "user", "content": user_prompt}],
+            system_prompt=system_prompt,
+            temperature=0.7
+        )
+
+    def generate_morning_briefing(self, events: list, user_name: str, weather_info: str = "Clear skies expected") -> str:
         """
         Generates a morning briefing summary using Claude.
+        Updated to use specific phrasing: "Here is your schedule for today:"
         """
         if not self.claude_client:
-            return f"Good morning {user_name}! You have {len(events)} events today."
+            event_count = len(events) if events else 0
+            return f"Good morning {user_name}! ☀️ Here is your schedule for today: You have {event_count} events."
 
         # Format events for the prompt
         events_text = "No events scheduled for today."
         if events:
             events_lines = []
             for e in events:
-                start = e['start'].get('dateTime', e['start'].get('date'))
+                # Handle Google Calendar datetime format
+                start = e.get('start', {}).get('dateTime', e.get('start', {}).get('date', 'All day'))
+                # Attempt to parse and format time nicely if it's an ISO string
+                try:
+                    import datetime
+                    if 'T' in start:
+                        dt = datetime.datetime.fromisoformat(start)
+                        time_str = dt.strftime("%I:%M%p").lower() # e.g. 10:00am
+                    else:
+                        time_str = start # Keep as is (e.g. date only)
+                except:
+                    time_str = start
+
                 summary = e.get('summary', 'No Title')
-                events_lines.append(f"- {summary} at {start}")
+                events_lines.append(f"- {time_str}: {summary}")
             events_text = "\n".join(events_lines)
 
         system_prompt = (
             "You are a helpful, enthusiastic personal assistant. "
-            "Your goal is to provide a concise, motivating morning briefing."
+            "Your goal is to provide a concise morning briefing."
+            "Start EXACTLY with: 'Good morning {name}! ☀️ Here is your schedule for today:'"
         )
 
         user_prompt = (
             f"Generate a morning briefing for {user_name}.\n\n"
             f"Weather: {weather_info}\n"
             f"Today's Schedule:\n{events_text}\n\n"
-            "Keep it encouraging, mention the weather, and summarize the day's load. "
-            "If there are key events, highlight them. Keep it under 150 words."
+            "Rules:\n"
+            "1. Start the message with: 'Good morning {user_name}! ☀️ Here is your schedule for today:'\n"
+            "2. List the events clearly using bullet points (•).\n"
+            "3. If there are no events, say 'You have no events scheduled. Enjoy your free time!'\n"
+            "4. Keep it concise, friendly and encouraging.\n"
+            "5. Do NOT use newlines for the list items if possible, or keep them short. "
+            "(The system will flatten newlines to '|' for WhatsApp, so write accordingly)."
         )
 
         return self._get_claude_chat_response(

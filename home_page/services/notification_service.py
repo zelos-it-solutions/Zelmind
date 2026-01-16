@@ -114,7 +114,7 @@ def send_whatsapp_message(to_number, body=None, content_sid=None, content_variab
                  logger.info(f"WhatsApp template message sent to {to_number}: {message.sid}")
                  return True
             except Exception as e:
-                logger.warning(f"Failed to send WhatsApp template to {to_number}: {e}. Falling back to standard message.")
+                logger.warning(f"Failed to send WhatsApp template to {to_number}: {e} (Code: {getattr(e, 'code', 'N/A')}). Falling back to standard message.")
                 # Fall through to body send
 
         if body:
@@ -243,6 +243,9 @@ def process_user_reminders(pref):
                         var_name_header = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_VARIABLE_HEADER', '2')
                         
                         flat_body = wa_body.replace('\n', ' | ')
+                        # Truncate to avoid length limits (Twilio ~1024 chars for variable)
+                        if len(flat_body) > 1000:
+                            flat_body = flat_body[:997] + "..."
                         
                         variables = {var_name_body: flat_body}
                         # Header is "Event Reminder"
@@ -252,7 +255,7 @@ def process_user_reminders(pref):
                             pref.whatsapp_number, 
                             body=wa_body, # Fallback
                             content_sid=template_sid, 
-                            content_variables=json.dumps(variables)
+                            content_variables=json.dumps(variables, ensure_ascii=True)
                         )
                     else:
                         # Use Session Message (Standard)
@@ -354,8 +357,15 @@ def check_and_send_morning_briefings():
         now_local = now_utc.astimezone(user_tz)
         current_time_local = now_local.time()
         
-        # Check if current LOCAL hour/minute matches the user's configured briefing time
-        if briefing_time.hour == current_time_local.hour and briefing_time.minute == current_time_local.minute:
+        # Check if current LOCAL time is within a 5-minute window
+        # This handles minor cron delays or seconds mismatches
+        # Convert to minutes for easier comparison
+        target_minutes = briefing_time.hour * 60 + briefing_time.minute
+        current_minutes = current_time_local.hour * 60 + current_time_local.minute
+        
+        # Match if within 0-5 mins after target time
+        diff = current_minutes - target_minutes
+        if 0 <= diff < 5:
              today_str = now_local.strftime("%Y-%m-%d")
              cache_key = f"morning_briefing_{pref.user.id}_{today_str}"
              
@@ -389,6 +399,9 @@ def check_and_send_morning_briefings():
                                var_name_header = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_VARIABLE_HEADER', '2')
                                
                                flat_briefing = briefing_msg.replace('\n', ' | ')
+                               # Truncate briefing
+                               if len(flat_briefing) > 1000:
+                                   flat_briefing = flat_briefing[:997] + "..."
                                
                                variables = {var_name_body: flat_briefing}
                                variables[var_name_header] = "Morning Briefing"
@@ -397,16 +410,38 @@ def check_and_send_morning_briefings():
                                    pref.whatsapp_number,
                                    body=briefing_msg, 
                                    content_sid=template_sid, 
-                                   content_variables=json.dumps(variables)
+                                   content_variables=json.dumps(variables, ensure_ascii=True)
                                )
                          else:
-                              send_whatsapp_message(pref.whatsapp_number, body=briefing_msg)
+                               send_whatsapp_message(pref.whatsapp_number, body=briefing_msg)
                          
                          logger.info(f"Sent morning briefing to {pref.user.username}")
                      else:
                          logger.warning(f"User {pref.user.username} has no WhatsApp number for briefing.")
-                     
-                     # 4. Mark as sent
+
+                     # 4. Send Email (Added)
+                     if pref.email_enabled:
+                         try:
+                             to_email = pref.user.email
+                             subject = f"Morning Briefing: {today_str}"
+                             # Simple body
+                             email_body_text = f"{briefing_msg}\n\nBest,\nReminder Agent"
+                             
+                             # ZeptoMail
+                             success_email = False
+                             if getattr(settings, 'ZEPTOMAIL_API_TOKEN', None):
+                                 success_email = send_email_zeptomail(to_email, subject, email_body_text)
+                             
+                             # SMTP Fallback
+                             if not success_email and settings.EMAIL_HOST_USER:
+                                 from django.core.mail import send_mail
+                                 send_mail(subject, email_body_text, settings.EMAIL_HOST_USER, [to_email], fail_silently=True)
+                                 
+                             logger.info(f"Morning Briefing Email sent to {to_email}")
+                         except Exception as e_em:
+                             logger.error(f"Failed to send briefing email: {e_em}")
+
+                     # 5. Mark as sent
                      cache.set(cache_key, True, timeout=86400) # 24h
                      
                  except Exception as e:
