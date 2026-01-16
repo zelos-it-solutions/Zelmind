@@ -21,6 +21,7 @@ debug_failure.txt
 debug_reminders.py
 debug_whatsapp.py
 debug_whatsapp_simple.py
+debug_whatsapp_template_check.py
 doc.txt
 reproduce_issue.py
 reproduce_issue_v2.py
