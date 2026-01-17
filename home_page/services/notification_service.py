@@ -243,9 +243,10 @@ def process_user_reminders(pref):
                         var_name_header = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_VARIABLE_HEADER', '2')
                         
                         flat_body = wa_body.replace('\n', ' | ')
-                        # Truncate to avoid length limits (Twilio ~1024 chars for variable)
-                        if len(flat_body) > 1000:
-                            flat_body = flat_body[:997] + "..."
+                        # Truncate to avoid length limits (Twilio ~1024 chars TOTAL for template).
+                        # Reducing to 800 to be safe (allowing for static text + other vars).
+                        if len(flat_body) > 800:
+                            flat_body = flat_body[:797] + "..."
                         
                         variables = {var_name_body: flat_body}
                         # Header is "Event Reminder"

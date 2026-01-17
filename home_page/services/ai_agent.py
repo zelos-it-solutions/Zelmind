@@ -198,6 +198,7 @@ class AIAgent:
             return {"action": "unknown", "params": {}, "details": "AI client not initialized."}
 
         parameter_prompt = (
+
             """You are a calendar parameter extractor. Extract structured data from the user's calendar request.
 
             ACTIONS: create_event, list_events, delete_event, update_event, find_free_slots, list_calendars
@@ -221,23 +222,20 @@ class AIAgent:
 
             OPTIONAL FIELDS:
             - attendees (list of email addresses)
+            - recurrence (RRULE string) - ONLY if explicitly requested
 
             RESPONSE FORMAT - Return ONLY valid JSON with double quotes, no markdown:
             {
             "action": "action_name",
             "params": {
                 "summary": "event title",
-                "date": "relative or absolute date",
-                "start": "time or datetime",
-                "end": "time or datetime",
-                "duration": "minutes or 'X hours'",
+                "date": "YYYY-MM-DD",
+                "start": "ISO-8601 datetime (YYYY-MM-DDTHH:MM:SS)",
+                "end": "ISO-8601 datetime (YYYY-MM-DDTHH:MM:SS)",
+                "duration": "minutes",
+                "recurrence": "RRULE:FREQ=...",
                 "attendees": ["email@example.com"],
-                "updates": {
-                    "summary": "new title",
-                    "start": "new start time",
-                    "end": "new end time",
-                    "date": "new date"
-                },
+                "updates": { ... },
                 "present": {},
                 "missing": []
             },
@@ -245,31 +243,36 @@ class AIAgent:
             }
 
             CRITICAL: Analyze what information IS present and what's MISSING:
-            - "present" object: Include ANY fields you detected (summary, date, start, end, duration, attendees)
-            - "missing" array: List required fields that are MISSING or UNCLEAR
+            - "present" object: Include ANY fields you detected
+            - "missing" array: List required fields that are MISSING
 
-            Examples:
+            ⚠️ CRITICAL RECURRENCE RULE:
+            - DO NOT assume specific recurrence (e.g. WEEKLY) unless the user EXPLICITLY says "every", "weekly", "repeating", "recurring", etc.
+            - "Tonite", "Today", "Tomorrow" usually imply a SINGLE event.
+            - Conversely, IF the user uses "every", "weekly", "daily", output the correct RRULE.
+
+            ⚠️ CRITICAL TIME HANDLING (ISO-8601):
+            - ALWAYS calculate specific ISO-8601 datetimes for 'start' and 'end' relative to the current date ({current_date}).
+            - DO NOT return "tomorrow 2pm" or "tonight". RETURN "2024-05-21T14:00:00".
+            - MIDNIGHT CROSSING: If event creates a span like "11pm to 1am", ensure the 'end' datetime is the NEXT DAY.
+            - "11:20 pm tonight to 12:20 am tomorrow" (assuming today is 2024-01-01):
+              - Start: "2024-01-01T23:20:00"
+              - End:   "2024-01-02T00:20:00" (Date incremented!)
+
+            Examples (Assuming today is 2024-01-01):
 
             Input: "Schedule team meeting tomorrow 2-3pm"
-            Output: {{"action": "create_event", "params": {{"summary": "team meeting", "date": "tomorrow", "start": "14:00", "end": "15:00", "present": {{"summary": "team meeting", "date": "tomorrow", "start": "14:00", "end": "15:00"}}, "missing": []}}, "details": "team meeting tomorrow 2-3pm"}}
+            Output: {{"action": "create_event", "params": {{"summary": "team meeting", "date": "2024-01-02", "start": "2024-01-02T14:00:00", "end": "2024-01-02T15:00:00", "present": {{"summary": "team meeting", "date": "tomorrow", "start": "14:00", "end": "15:00"}}, "missing": []}}, "details": "team meeting tomorrow 2-3pm"}}
 
-            Input: "Book a dentist appointment"
-            Output: {{"action": "create_event", "params": {{"summary": "dentist appointment", "present": {{"summary": "dentist appointment"}}, "missing": ["date", "time"]}}, "details": "dentist appointment"}}
+            Input: "Create a team review meeting by 11:20 pm tonight"
+            Output: {{"action": "create_event", "params": {{"summary": "team review meeting", "date": "2024-01-01", "start": "2024-01-01T23:20:00", "present": {{"summary": "team review meeting", "date": "today", "start": "23:20"}}, "missing": ["duration"]}}, "details": "team review meeting tonight at 11:20pm"}}
 
-            Input: "Meeting with John at 2pm"
-            Output: {{"action": "create_event", "params": {{"summary": "meeting with John", "start": "14:00", "present": {{"summary": "meeting with John", "start": "14:00"}}, "missing": ["date", "end"]}}, "details": "meeting with John at 2pm"}}
+            Input: "Party from 11pm tonight to 2am tomorrow"
+            Output: {{"action": "create_event", "params": {{"summary": "Party", "date": "2024-01-01", "start": "2024-01-01T23:00:00", "end": "2024-01-02T02:00:00", "present": {{"summary": "Party", "start": "23:00", "end": "02:00"}}, "missing": []}}, "details": "Party 11pm tonight to 2am tomorrow"}}
 
-            Input: "What's on my calendar tomorrow?"
-            Output: {{"action": "list_events", "params": {{"date": "tomorrow"}}, "details": "list events tomorrow"}}
-
-            Input: "Change my dentist appointment to 3pm"
-            Output: {{"action": "update_event", "params": {{"summary": "dentist appointment", "updates": {{"start": "15:00"}}, "present": {{"summary": "dentist appointment", "updates": {{"start": "15:00"}}}}, "missing": []}}, "details": "update dentist appointment to 3pm"}}
-
-            Input: "Move tomorrow's meeting to Friday"
-            Output: {{"action": "update_event", "params": {{"summary": "meeting", "date": "tomorrow", "updates": {{"date": "Friday"}}, "present": {{"summary": "meeting", "date": "tomorrow", "updates": {{"date": "Friday"}}}}, "missing": []}}, "details": "move tomorrow's meeting to Friday"}}
-
-            Input: "Reschedule the team sync to 4pm and rename it to standup"
-            Output: {{"action": "update_event", "params": {{"summary": "team sync", "updates": {{"start": "16:00", "summary": "standup"}}, "present": {{"summary": "team sync", "updates": {{"start": "16:00", "summary": "standup"}}}}, "missing": []}}, "details": "update team sync to 4pm and rename to standup"}}
+            Input: "Schedule a standup every Monday at 10am"
+            Output: {{"action": "create_event", "params": {{"summary": "standup", "date": "2024-01-06", "start": "2024-01-06T10:00:00", "recurrence": "RRULE:FREQ=WEEKLY;BYDAY=MO", "present": {{"summary": "standup", "recurrence": "every Monday", "start": "10:00"}}, "missing": ["duration"]}}, "details": "weekly standup Monday 10am"}}
+            (Note: Date set to next upcoming Monday)
 
             Input: "Update the meeting at 10am to 2pm"
             Output: {{"action": "update_event", "params": {{"summary": "meeting", "start": "10:00", "updates": {{"start": "14:00"}}, "present": {{"summary": "meeting", "start": "10:00", "updates": {{"start": "14:00"}}}}, "missing": []}}, "details": "update meeting at 10am to 2pm"}}
