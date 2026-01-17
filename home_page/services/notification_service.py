@@ -255,7 +255,7 @@ def process_user_reminders(pref):
                             pref.whatsapp_number, 
                             body=wa_body, # Fallback
                             content_sid=template_sid, 
-                            content_variables=json.dumps(variables, ensure_ascii=True)
+                            content_variables=json.dumps(variables, ensure_ascii=False)
                         )
                     else:
                         # Use Session Message (Standard)
@@ -410,7 +410,7 @@ def check_and_send_morning_briefings():
                                    pref.whatsapp_number,
                                    body=briefing_msg, 
                                    content_sid=template_sid, 
-                                   content_variables=json.dumps(variables, ensure_ascii=True)
+                                   content_variables=json.dumps(variables, ensure_ascii=False)
                                )
                          else:
                                send_whatsapp_message(pref.whatsapp_number, body=briefing_msg)

@@ -725,9 +725,16 @@ def chat_process(request):
                     s_dt = start_data.get('dateTime') or start_data.get('date')
                     e_dt = end_data.get('dateTime') or end_data.get('date')
                     if s_dt and e_dt and str(s_dt) >= str(e_dt):
+                         err_text = "I noticed the end time is before the start time. Please provide a valid time range (e.g., '11:20pm today to 12:20am tomorrow')."
+                         Message.objects.create(
+                            conversation=convo,
+                            sender='agent',
+                            text=err_text,
+                            message_type='text', 
+                         )
                          return JsonResponse({
                             'type': 'text',
-                            'response': "I noticed the end time is before the start time. Please provide a valid time range (e.g., '11:20pm today to 12:20am tomorrow').",
+                            'response': err_text,
                             'content': {},
                             'intent': 'calendar',
                             'convo_id': str(convo.id)
