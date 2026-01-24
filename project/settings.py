@@ -27,7 +27,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key-change-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = [x.strip() for x in os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')]
@@ -64,8 +63,8 @@ INSTALLED_APPS = [
 SITE_ID = 4
 
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = '/agent/assistant/' # Changed from /home/ to actual app
-ACCOUNT_LOGIN_METHODS = {'email'}  # replacing ACCOUNT_AUTHENTICATION_METHOD
+LOGIN_REDIRECT_URL = '/agent/assistant/'
+ACCOUNT_LOGIN_METHODS = {'email'}  
 
 # Remove any required manual signup fields (social signup uses provider data)
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
@@ -77,8 +76,6 @@ SOCIALACCOUNT_PROVIDERS = {
             'profile', 
             'email',
             "https://www.googleapis.com/auth/calendar.events",
-            "https://www.googleapis.com/auth/calendar.readonly",
-            "https://www.googleapis.com/auth/gmail.send",
             ],
         'AUTH_PARAMS': {
             'access_type': 'offline',
