@@ -20,6 +20,14 @@ def landing_page(request):
     return render(request, 'authentication/landing_page.html')
 
 
+def privacy_policy(request):
+    return render(request, 'authentication/privacy_policy.html')
+
+
+def terms_of_service(request):
+    return render(request, 'authentication/terms_of_service.html')
+
+
 def signUpUser(request):
     if request.method == "POST":
         form = SignUpForm(request.POST)
