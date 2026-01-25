@@ -59,9 +59,15 @@ a {
 .logo {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0rem;
     font-weight: 700;
     font-size: 1.25rem;
+}
+
+.logo span {
+    line-height: 1;
+    display: block; 
+    margin-top: 2px; 
 }
 
 .nav-logo-img {
