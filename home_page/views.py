@@ -2965,8 +2965,7 @@ def connect_google(request):
     new_query = urlencode(query_dict, doseq=True)
     next_url  = urlunparse(parts._replace(query=new_query))
     extras = [ # scopes for gmail and calendar
-        "https://www.googleapis.com/auth/calendar.events",
-        "https://www.googleapis.com/auth/calendar.readonly",
+        "https://www.googleapis.com/auth/calendar",
         "https://www.googleapis.com/auth/gmail.send",
     ]
     params = [
