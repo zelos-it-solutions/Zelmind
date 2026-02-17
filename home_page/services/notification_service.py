@@ -14,6 +14,9 @@ import requests
 
 logger = logging.getLogger(__name__)
 
+class ZeptoMailQuotaExceeded(Exception):
+    pass
+
 
 def send_email_zeptomail(to_email, subject, body):
     """
@@ -67,9 +70,9 @@ def send_email_zeptomail(to_email, subject, body):
         if response.status_code == 200 or response.status_code == 201:
             logger.info(f"ZeptoMail: Email sent to {to_email}")
             return True
-        elif response.status_code == 429:
-            logger.error(f"ZeptoMail Rate Limit Exceeded: {response.text}")
-            return False
+        elif response.status_code == 429 or "Credit exhausted" in response.text or "TM_5001" in response.text:
+            logger.error(f"ZeptoMail Quota/Rate Limit Exceeded: {response.text}")
+            raise ZeptoMailQuotaExceeded("ZeptoMail Credit Exhausted") 
         else:
             logger.error(f"ZeptoMail API error: {response.status_code} - {response.text}")
             return False
@@ -245,10 +248,9 @@ def process_user_reminders(pref):
                 if pref.whatsapp_enabled and pref.whatsapp_number and not already_notified_whatsapp:
                     wa_body = ai_message
                     
-                    template_sid = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_SID', None)
+                    template_sid = getattr(settings, 'TWILIO_WHATSAPP_REMINDER_SID', None)
                     if template_sid:
                         var_name_body = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_VARIABLE_BODY', '1')
-                        var_name_header = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_VARIABLE_HEADER', '2')
                         
                         flat_body = wa_body.replace('\n', ' | ')
                         # Truncate to avoid length limits (Twilio ~1024 chars TOTAL for template).
@@ -257,8 +259,8 @@ def process_user_reminders(pref):
                             flat_body = flat_body[:797] + "..."
                         
                         variables = {var_name_body: flat_body}
-                        # Header is "Event Reminder"
-                        variables[var_name_header] = "Event Reminder"
+                        # Header is static "Event Reminder" in template now, so no variable needed.
+                        # variables[var_name_header] = "Event Reminder"
 
                         success = send_whatsapp_message(
                             pref.whatsapp_number, 
@@ -288,16 +290,21 @@ def process_user_reminders(pref):
                     email_body_text = f"{ai_message}\n\nBest,\nReminder Agent"
                     
                     success_email = False
+                    skip_smtp = False
                     logger.info(f"Sending email for event {event_id} to {to_email}")
                     
                     # Try ZeptoMail API first (works on Railway - uses HTTPS, not blocked SMTP ports)
                     if getattr(settings, 'ZEPTOMAIL_API_TOKEN', None):
-                        success_email = send_email_zeptomail(to_email, subject, email_body_text)
-                        if success_email:
-                            logger.info(f"ZeptoMail email sent to {to_email} for event {summary}")
-                    
+                        try:
+                            success_email = send_email_zeptomail(to_email, subject, email_body_text)
+                            if success_email:
+                                logger.info(f"ZeptoMail email sent to {to_email} for event {summary}")
+                        except ZeptoMailQuotaExceeded:
+                            logger.error("ZeptoMail Quota Exceeded. Skipping SMTP fallback to avoid timeout.")
+                            skip_smtp = True
+
                     # Fallback to SMTP if ZeptoMail not configured or failed (for local dev)
-                    if not success_email and settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD:
+                    if not skip_smtp and not success_email and settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD:
                         try:
                             from django.core.mail import get_connection, EmailMessage
                             
@@ -402,7 +409,7 @@ def check_and_send_morning_briefings():
                      
                      # 3. Send via WhatsApp
                      if pref.whatsapp_number:
-                         template_sid = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_SID', None)
+                         template_sid = getattr(settings, 'TWILIO_WHATSAPP_BRIEFING_SID', None)
                          if template_sid:
                                 var_name_body = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_VARIABLE_BODY', '1')
                                 var_name_header = getattr(settings, 'TWILIO_WHATSAPP_TEMPLATE_VARIABLE_HEADER', '2')
@@ -413,7 +420,7 @@ def check_and_send_morning_briefings():
                                     flat_briefing = flat_briefing[:997] + "..."
                                 
                                 variables = {var_name_body: flat_briefing}
-                                variables[var_name_header] = "Morning Briefing"
+                                # variables[var_name_header] = "Morning Briefing"
                                
                                 send_whatsapp_message(
                                    pref.whatsapp_number,
@@ -438,11 +445,16 @@ def check_and_send_morning_briefings():
                              
                              # ZeptoMail
                              success_email = False
+                             skip_smtp = False
                              if getattr(settings, 'ZEPTOMAIL_API_TOKEN', None):
-                                 success_email = send_email_zeptomail(to_email, subject, email_body_text)
+                                 try:
+                                     success_email = send_email_zeptomail(to_email, subject, email_body_text)
+                                 except ZeptoMailQuotaExceeded:
+                                     logger.error("ZeptoMail Quota Exceeded for Briefing. Skipping SMTP fallback.")
+                                     skip_smtp = True
                              
                              # SMTP Fallback
-                             if not success_email and settings.EMAIL_HOST_USER:
+                             if not skip_smtp and not success_email and settings.EMAIL_HOST_USER:
                                  from django.core.mail import send_mail
                                  send_mail(subject, email_body_text, settings.EMAIL_HOST_USER, [to_email], fail_silently=True)
                                  

@@ -56,7 +56,6 @@ def signUpUser(request):
 
 
 def loginUser(request):
-    # only attempt auth and add messages when the form is submitted
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
@@ -74,5 +73,4 @@ def loginUser(request):
         for _ in storage:
             pass
 
-    # for GET (or after a failed POST), just render the page without adding extra messages
     return render(request, "authentication/login.html", {})

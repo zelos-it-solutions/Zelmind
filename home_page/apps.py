@@ -7,39 +7,39 @@ class HomePageConfig(AppConfig):
 
     def ready(self):
         import home_page.signals_debug
-        
-        # Start the background reminder worker if not running via management command
-        # Check if in a runserver/gunicorn process (not migration or shell)
+        import socket
         import sys
+        import logging
+
+        # SINGLETON LOCK MECHANISM
+        # Environment variables like RUN_MAIN are unreliable across different OS/Servers.
+        # We use a socket binding to ensuring ONLY ONE process ever starts the worker.
+
+        # 1. Skip if running management commands (migrate, shell, etc)
         is_manage_py = any('manage.py' in arg for arg in sys.argv)
         is_runserver = any('runserver' in arg for arg in sys.argv)
-        is_gunicorn = 'gunicorn' in sys.argv[0]
         
-        # Control background thread via logic
-        # 1. Explicitly enabled via env var
-        # 2. Or implicitly enabled in Development (runserver + DEBUG)
-        
-        import os
-        from django.conf import settings
-        
-        enable_env = os.environ.get('ENABLE_REMINDER_THREAD', '').lower() == 'true'
-        disable_env = os.environ.get('ENABLE_REMINDER_THREAD', '').lower() == 'false'
-        
-        # Logic: Start if enabled explicitly OR (Development env AND not successfully disabled)
-        should_start = False
-        
-        if enable_env:
-            should_start = True
-        elif not disable_env and settings.DEBUG and is_runserver:
-            # Only start in the main process, not the reloader
-            if os.environ.get('RUN_MAIN') == 'true':
-                should_start = True
-            
-        if should_start:
-            from .reminder_worker import ReminderWorker
-            try:
-                ReminderWorker.start()
-            except Exception as e:
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Failed to start reminder worker: {e}", exc_info=True)
+        # If manage.py is running something other than runserver, we generally don't want the worker
+        # UNLESS it is strictly 'runserver'.
+        if is_manage_py and not is_runserver:
+            return
+
+        # 2. Try to acquire the lock
+        # We bind to a specific port. If it fails, another instance is already running.
+        try:
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.bind(("127.0.0.1", 40123))
+        except socket.error:
+            # Socket already in use -> Worker is already running in another process
+            # Do NOT start a new one.
+            return
+
+        # 3. If we got here, we are the ONE TRUE WORKER.
+        from .reminder_worker import ReminderWorker
+        try:
+            # We don't close the socket; we keep it open to hold the lock until process storage.
+            # ReminderWorker.start() launches a daemon thread, so it won't block django.
+            ReminderWorker.start()
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to start reminder worker: {e}", exc_info=True)
