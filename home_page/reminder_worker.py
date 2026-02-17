@@ -38,6 +38,5 @@ class ReminderWorker:
                 logger.error(f"Error in reminder worker loop: {e}", exc_info=True)
             
             # Sleep for 60 seconds (or less if stopped)
-            # Use wait() to be responsive to stop event
             if cls._stop_event.wait(60):
                 break

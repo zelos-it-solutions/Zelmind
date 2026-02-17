@@ -23,6 +23,7 @@ import traceback
 from datetime import datetime, timedelta
 from django.utils.timezone import get_current_timezone, make_aware
 import re as _re
+from allauth.socialaccount.models import SocialAccount
 
 
 logger = logging.getLogger(__name__)
@@ -495,6 +496,23 @@ def chat_process(request):
                                 deleted_count += 1
                             except Exception as e:
                                 logger.error(f"Failed to delete event {eid}: {e}")
+                                str_e = str(e)
+                                if any(x in str_e for x in ["insufficientPermissions", "403", "Insufficient Permission", "invalid_grant", "reconnect", "expired"]):
+                                     error_msg = "It looks like your Google Calendar authorization has expired or is missing permissions. Please log out of the application and log back in, making sure to check the boxes to allow access to your calendar."
+                                     # Persist the error message
+                                     Message.objects.create(
+                                        conversation=convo,
+                                        sender='agent',
+                                        text=error_msg,
+                                        message_type='text'
+                                     )
+                                     return JsonResponse({
+                                        'type': 'text',
+                                        'response': error_msg,
+                                        'content': {},
+                                        'intent': 'calendar',
+                                        'convo_id': str(convo.id)
+                                    })
                         
                         success_msg = f"{deleted_count} events have been removed from your calendar."
                     else:
@@ -689,6 +707,15 @@ def chat_process(request):
                     except Exception as e:
                         logger.error(f"Error updating event: {e}", exc_info=True)
                         error_msg = "Sorry, I failed to update the event. Please try again."
+                        is_auth_error = False
+
+                        str_e = str(e)
+                        if any(x in str_e for x in ["insufficientPermissions", "403", "Insufficient Permission", "invalid_grant", "reconnect", "expired"]):
+                             error_msg = "It looks like your Google Calendar authorization has expired or is missing permissions. Please log out of the application and log back in, making sure to check the boxes to allow access to your calendar."
+                             
+                        
+                        # Fall through to standard error response creation below
+
                         
                         Message.objects.create(
                             conversation=convo,
@@ -867,12 +894,30 @@ def chat_process(request):
             except Exception as e:
                 logger.error(f"Error creating confirmed event: {e}", exc_info=True)
                 error_msg = "Sorry, I failed to create the event. Please try again."
-                
+                is_auth_error = False
+
                 # Check for specific Google API errors
-                if "Invalid recurrence rule" in str(e):
+                str_e = str(e)
+                if any(x in str_e for x in ["insufficientPermissions", "403", "Insufficient Permission", "invalid_grant", "reconnect", "expired"]):
+                     error_msg = "It looks like your Google Calendar authorization has expired or is missing permissions. Please log out of the application and log back in, making sure to check the boxes to allow access to your calendar."
+                     is_auth_error = False # Disable special handling to fall through to text response
+                elif "Invalid recurrence rule" in str_e:
                      error_msg = "Sorry, the recurrence pattern was invalid. Please try again with a simpler repetition (e.g., 'every Monday')."
-                elif "timeRangeEmpty" in str(e) or "specified time range is empty" in str(e):
+                elif "timeRangeEmpty" in str_e or "specified time range is empty" in str(e):
                      error_msg = "I couldn't create that event because the end time is before the start time. Please try again."
+
+                if is_auth_error:
+                    return JsonResponse({
+                        'type': 'needs_connection',
+                        'response': error_msg,
+                        'content': {
+                            'content_url': reverse('home_page:connect_google') + f"?next={reverse('home_page:assistant', args=[convo.id])}",
+                            'email': request.user.email,
+                            'message_for_user': error_msg
+                        },
+                        'intent': 'calendar',
+                        'convo_id': str(convo.id)
+                    })
 
                 Message.objects.create(
                     conversation=convo,
@@ -958,26 +1003,34 @@ def chat_process(request):
 
 
         # After OAuth redirect with ?resume=true, do not short-circuit. Allow normal handling below so that the prior user message is processed.
-        if response_type == 'calendar_action_request' and AIAgent(request.user).is_google_connected():
+        ai_agent_instance = AIAgent(request.user)
+        is_google = ai_agent_instance.is_google_connected()
+        
+        if response_type == 'calendar_action_request' and is_google:
             try:
                 action  = response_content['action']
                 params  = response_content['params']
 
-                # Ensure a token row exists; if not, ask user to reconnect to issue tokens
-                if not SocialToken.objects.filter(account__user=request.user, account__provider='google').exists():
+                # Instantiate the appropriate service (Google preferred if both connected)
+                gcal = None
+                
+                if is_google:
+                    if SocialToken.objects.filter(account__user=request.user, account__provider='google').exists():
+                        gcal = GoogleCalendarService(request.user)
+                
+                # Ensure a service was created
+                if not gcal:
                     response_data.update({
                         'type': 'needs_connection',
                         'response': None,
                         'content': {
-                            'message_for_user': 'Please connect your Google account to continue.',
+                            'message_for_user': 'Please connect your Calendar account to continue.',
                             'email': request.user.email,
                             'content_url': reverse('home_page:connect_google') + f"?next={reverse('home_page:assistant', args=[convo.id])}",
                             'needs_connection': True
                         }
                     })
                     return JsonResponse(response_data)
-
-                gcal    = GoogleCalendarService(request.user)
 
                 if action == 'find_free_slots':
                     # Normalize AI params to expected API
@@ -2978,6 +3031,7 @@ def connect_google(request):
     qs = urllib.parse.urlencode(params)
     return redirect(f"/accounts/google/login/?{qs}")
 
+
 @login_required
 def settings_view(request):
     from .models import NotificationPreference
@@ -3035,10 +3089,14 @@ def settings_view(request):
     # Sidebar needs conversations
     conversations = Conversation.objects.filter(user=request.user).order_by('-created_at')
 
+    # Check connected accounts
+    is_google_connected = SocialAccount.objects.filter(user=request.user, provider='google').exists()
+
     context = {
         "preferences": prefs,
         "conversations": conversations, 
         "current_convo": None, # No chat selected
         "next_url": next_url,
+        "is_google_connected": is_google_connected,
     }
     return render(request, "home_page/settings.html", context)

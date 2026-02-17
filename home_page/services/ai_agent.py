@@ -112,7 +112,11 @@ class AIAgent:
             ).account
             return social_account.extra_data.get('email')
         except (SocialToken.DoesNotExist, SocialAccount.DoesNotExist, AttributeError):
+            return social_account.extra_data.get('email')
+        except (SocialToken.DoesNotExist, SocialAccount.DoesNotExist, AttributeError):
             return None
+
+
 
     def is_google_connected(self) -> bool:
         """Return True if the user has a linked Google account.
@@ -129,7 +133,8 @@ class AIAgent:
             ).exists()
         except Exception:
             return False
-        
+
+
     def determine_intent(self, text: str, conversation=None) -> str:
         """Uses Claude to classify the user's intent (calendar vs general_chat)."""
         if not self.claude_client:
@@ -346,17 +351,20 @@ class AIAgent:
 
         # 2. Handle based on Intent
         if intent == 'calendar':
-            # Check Google Connection Status FIRST for calendar intents
-            if not self.is_google_connected():
-                logger.info("Calendar intent detected, but Google not connected. Requesting connection.")
+            # Check Connection Status (Google Only)
+            google_connected = self.is_google_connected()
+            
+            if not google_connected:
+                logger.info("Calendar intent detected, but no provider connected. Requesting connection.")
                 return {
                     'type': 'needs_connection',
                     'content': {
-                        'email': self.get_google_account_email() or self.user.email, # Pass email if available
+                        'email': self.user.email,
                         'message_for_user':(
                             "Sure – I can do that once you connect your Google account."
                         ),
-                        'needs_connection': True
+                        'needs_connection': True,
+                        'providers': ['google'] 
                     }
                 }
             else:

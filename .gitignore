@@ -29,6 +29,7 @@ reproduce_issue.py
 reproduce_issue_v2.py
 reproduce_issue_v3.py
 reproduce_recurring_update.py
+reproduce_auth_error.py
 test_notification_flow.py
 test_output.txt
 test_recurring_update.py

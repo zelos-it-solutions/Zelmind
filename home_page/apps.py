@@ -31,11 +31,15 @@ class HomePageConfig(AppConfig):
         if enable_env:
             should_start = True
         elif not disable_env and settings.DEBUG and is_runserver:
-            should_start = True
+            # Only start in the main process, not the reloader
+            if os.environ.get('RUN_MAIN') == 'true':
+                should_start = True
             
         if should_start:
             from .reminder_worker import ReminderWorker
             try:
                 ReminderWorker.start()
             except Exception as e:
-                print(f"Failed to start reminder worker: {e}")
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to start reminder worker: {e}", exc_info=True)

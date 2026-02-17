@@ -67,6 +67,9 @@ def send_email_zeptomail(to_email, subject, body):
         if response.status_code == 200 or response.status_code == 201:
             logger.info(f"ZeptoMail: Email sent to {to_email}")
             return True
+        elif response.status_code == 429:
+            logger.error(f"ZeptoMail Rate Limit Exceeded: {response.text}")
+            return False
         else:
             logger.error(f"ZeptoMail API error: {response.status_code} - {response.text}")
             return False
@@ -168,7 +171,12 @@ def process_user_reminders(pref):
         try:
             cal_service = GoogleCalendarService(user)
         except Exception as e:
-            logger.warning(f"Could not init calendar service for {user.username}: {e}")
+            # Check for auth errors to avoid spamming logs
+            str_e = str(e)
+            if any(x in str_e for x in ["insufficientPermissions", "403", "invalid_grant", "reconnect", "expired", "refresh token"]):
+                 logger.warning(f"Skipping reminders for {user.username}: Auth error (needs reconnect).")
+            else:
+                 logger.warning(f"Could not init calendar service for {user.username}: {e}")
             return
 
         # List events

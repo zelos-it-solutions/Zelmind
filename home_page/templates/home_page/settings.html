@@ -5,6 +5,54 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css">
+<style>
+    .connections-list {
+        margin-top: 16px;
+        background: #fff; /* Match card bg or slightly different */
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 16px;
+    }
+    .connection-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0;
+    }
+    .connection-item:not(:last-child) {
+        border-bottom: 1px solid #f0f0f0;
+        margin-bottom: 8px;
+    }
+    .connection-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 500;
+        color: #202124;
+    }
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .status-badge.success {
+        background: #e6f4ea;
+        color: #1e8e3e;
+    }
+    .btn-connect {
+        padding: 6px 16px;
+        background: #1a73e8;
+        color: white;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    .btn-connect:hover {
+        background: #1557b0;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -88,6 +136,26 @@
                     </select>
                 </div>
                 <p class="form-text">Choose a morning time for your daily summary.</p>
+            </div>
+
+            <div class="settings-header" style="margin-top: 32px;">
+                <h2>Connected Calendars</h2>
+            </div>
+            
+            <div class="connections-list">
+                 <div class="connection-item">
+                     <div class="connection-info">
+                         <img src="{% static 'home_page/images/google-calendar.png' %}" width="24" height="24" alt="Google">
+                         <span>Google Calendar</span>
+                     </div>
+                     {% if is_google_connected %}
+                         <span class="status-badge success">Connected</span>
+                     {% else %}
+                         <a href="{% url 'home_page:connect_google' %}?next={{ request.path|urlencode }}" class="btn-connect">Connect</a>
+                     {% endif %}
+                 </div>
+
+
             </div>
 
 

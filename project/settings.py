@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.yahoo',
 
     # Apps
     'authentication',
@@ -81,7 +82,7 @@ SOCIALACCOUNT_PROVIDERS = {
             'access_type': 'offline',
             'prompt': 'consent select_account'
         },
-    }
+    },
 }
 
 # Enable auto-redirect for social logins (skip confirmation page)
