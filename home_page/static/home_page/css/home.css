@@ -315,18 +315,6 @@ body, html {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px; /* Space between logo and text */
-  font-weight: 600; /* Make text slightly bolder to match logo */
-  font-size: 18px; /* Adjust font size if needed */
-}
-
-.navbar .nav-logo {
-  height: 30px; /* Adjust based on navbar height (50px) */
-  width: auto;
-  object-fit: contain;
 }
 .navbar .logout-btn {
   position: absolute;

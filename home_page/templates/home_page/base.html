@@ -7,6 +7,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Zelmind{% endblock %}</title>
+  <link rel="icon" type="image/png" href="{% static 'authentication/images/zelmind_logo_cropped.png' %}">
   <link rel="stylesheet" href="{% static 'home_page/css/home.css' %}" />
 
   {% block extra_css %}{% endblock %}
@@ -38,10 +39,7 @@
       </span>
     </div>
 
-    <div class="nav-title">
-      <img src="{% static 'authentication/images/zelmind_logo_cropped.png' %}" alt="Zelmind Logo" class="nav-logo">
-      <span>Zelmind</span>
-    </div>
+    <div class="nav-title">Zelmind</div>
 
     <!-- Right side controls (Settings + Logout) -->
     <div class="nav-controls">
